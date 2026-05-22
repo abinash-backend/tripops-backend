@@ -1,6 +1,6 @@
 spring:
   application:
-    name: TOURS-AND-TRAVEL-MANAGEMENT-SYSTEM
+    name: TripOps-Booking-Inventory-Management-Service
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
