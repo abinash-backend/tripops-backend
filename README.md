@@ -1,407 +1,411 @@
-# TripOps-Booking-Inventory-Management-Service
+# TripOps | Booking & Inventory Management Service
 
-![Java](https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3-brightgreen?style=for-the-badge&logo=springboot)
-![Spring Security](https://img.shields.io/badge/Spring_Security-Secured-6DB33F?style=for-the-badge&logo=springsecurity)
-![JWT](https://img.shields.io/badge/Auth-JWT-blue?style=for-the-badge&logo=jsonwebtokens)
-![RBAC](https://img.shields.io/badge/Authorization-RBAC-darkgreen?style=for-the-badge)
-![Database](https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge&logo=postgresql)
-![Cache](https://img.shields.io/badge/Cache-Redis-DC382D?style=for-the-badge&logo=redis)
-![Build](https://img.shields.io/badge/Build-Maven-C71A36?style=for-the-badge&logo=apachemaven)
-![API Docs](https://img.shields.io/badge/API-Swagger%20%2F%20OpenAPI-85EA2D?style=for-the-badge&logo=swagger)
-![Testing](https://img.shields.io/badge/Tests-JUnit5%20%7C%20Mockito%20%7C%20MockMvc-25A162?style=for-the-badge)
-![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions)
-![License](https://img.shields.io/badge/License-MIT-black?style=for-the-badge)
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.1.4-6DB33F)
+![Architecture](https://img.shields.io/badge/Architecture-Modular_Monolith-1f6feb)
+![Security](https://img.shields.io/badge/Security-JWT%20%2B%20RBAC-0f766e)
+![Database](https://img.shields.io/badge/Database-PostgreSQL-4169E1)
+![Cache](https://img.shields.io/badge/Cache-Redis-DC382D)
+![Build](https://img.shields.io/badge/Build-Maven-C71A36)
+![API](https://img.shields.io/badge/API-OpenAPI%20%2F%20Swagger-85EA2D)
+![Container](https://img.shields.io/badge/Container-Docker-2496ED)
+![License](https://img.shields.io/badge/License-MIT-black)
 
----
+TripOps is a Spring Boot backend for booking workflows, package inventory management, authentication, and operational API flows. The codebase is intentionally structured as a modular monolith: domain boundaries are explicit, cross-cutting concerns are centralized, and the deployment model remains simple while the architecture stays ready for future service extraction.
 
-## About
+This repository is backend-first. It emphasizes transactional correctness, access control, cache-aware read paths, and maintainable module ownership over tutorial-style scaffolding or premature distributed systems complexity.
 
-**TripOps-Booking-Inventory-Management-Service** is a modern Spring Boot backend built for travel agencies and booking platforms. It provides APIs for travel package management, booking workflows, secure authentication, authorization, and payment handling.
+## Overview
 
-The project originally began as a traditional **Spring MVC + Thymeleaf** application and has since been rebuilt into a **REST-first backend** using a **modular monolith architecture**. The current design emphasizes maintainability, clear module boundaries, API-driven development, and production-oriented backend practices.
+TripOps currently runs as a single deployable application backed by PostgreSQL and Redis. Business capabilities are separated into domain modules with their own controllers, services, repositories, DTOs, and mapping logic. Shared concerns such as security, exception handling, OpenAPI configuration, and health exposure live in a dedicated common layer.
 
----
+The system models inventory through travel packages and availability metadata, then composes booking and payment flows on top of those records. This keeps the operational surface coherent today while preserving a clean extraction path for `auth`, `packages`, `booking`, and `payment` if the deployment topology needs to evolve later.
 
-## Architecture Overview
+## Architecture
 
-The application is structured as a **modular monolith**, where business capabilities are separated into well-defined modules while remaining part of a single deployable Spring Boot application.
+### Architectural direction
 
-### Core Architectural Principles
+- Modular monolith, single runtime, explicit domain boundaries
+- Layered module design: controller -> service -> repository -> persistence
+- Stateless REST APIs secured with JWT and role-based authorization
+- Shared infrastructure for security, exception handling, caching, and API documentation
+- Future extraction path designed around domain ownership, not around current distributed deployment
 
-- Clear separation of business domains
-- Layered architecture across all modules
-- Shared common infrastructure for security, configuration, and exception handling
-- REST-based communication model
-- Centralized authentication and role-based authorization
+### Why modular monolith here
 
-### Layered Structure
+TripOps keeps the operational simplicity of one deployable unit while enforcing boundaries that matter in production:
 
-`Controller -> Service -> Repository -> Database`
+- low coordination overhead across domains
+- straightforward local development and test execution
+- transactional consistency inside a single relational datastore
+- clear internal seams for later service extraction if scaling or team topology requires it
 
-- `Controller` handles HTTP requests and response mapping
-- `Service` contains business logic and workflow orchestration
-- `Repository` manages persistence via Spring Data JPA
-- `Database` stores domain data in PostgreSQL
+This project does not claim to be a distributed system today. The extraction strategy is architectural preparation, not an overstated microservices claim.
 
----
+### High-level flow
+
+```text
+Clients
+   |
+   v
+Spring Security Filter Chain
+   |
+   v
+REST Controllers
+   |
+   v
+Domain Services
+   | \
+   |  \--> Redis-backed cached read paths for package inventory
+   |
+   v
+Spring Data JPA Repositories
+   |
+   v
+PostgreSQL
+```
 
 ## Domain Modules
 
 | Module | Responsibility |
 | --- | --- |
-| `auth` | Authentication, JWT issuance, request security, and login-related workflows |
-| `user` | User registration, profile management, and identity-related operations |
-| `packages` | Travel package creation, updates, retrieval, and package catalog management |
-| `booking` | Booking lifecycle management, booking creation, status tracking, and related workflows |
-| `payment` | Payment processing flow, payment status handling, and payment-related integration points |
-| `common` | Shared infrastructure including configuration, exception handling, API helpers, and reusable utilities |
+| `auth` | Login flow, JWT issuance, authenticated principal resolution, request filtering |
+| `user` | User registration, admin creation, role assignment, user listing |
+| `packages` | Package catalog and inventory-facing operations, package lifecycle, cached reads |
+| `booking` | Booking creation, booking retrieval, ownership-scoped booking workflows |
+| `payment` | Payment record creation and booking confirmation workflow |
+| `common` | Security configuration, OpenAPI, cache config, health endpoints, API envelope, exception handling |
 
----
+## Feature Highlights
 
-## System Architecture Diagram
+- Stateless authentication with JWT bearer tokens
+- RBAC enforcement for `USER` and `ADMIN` access paths
+- Package catalog management with status, pricing, dates, and capacity metadata
+- Booking workflow with authenticated user ownership enforcement
+- Payment workflow that advances booking state after confirmation
+- Redis-backed caching for high-read package endpoints
+- Centralized error handling with structured JSON error responses
+- OpenAPI/Swagger exposure for endpoint discovery and backend integration testing
+- Health endpoints for runtime verification
+- CI validation through Maven build and automated test execution
 
-```text
-                          +------------------------------+
-                          |         Client Apps          |
-                          |  Web / Mobile / Postman      |
-                          +--------------+---------------+
-                                         |
-                                         v
-                          +------------------------------+
-                          |      REST API Controllers    |
-                          +--------------+---------------+
-                                         |
-                                         v
-        +-------------------------------------------------------------------+
-        |                         Service Layer                             |
-        | auth | user | packages | booking | payment | common |
-        +-------------------------+-------------+-------------+--------------+
-                                  |
-                                  v
-                        +-------------------------+
-                        |    Repository Layer     |
-                        |   Spring Data JPA       |
-                        +------------+------------+
-                                     |
-                                     v
-                        +-------------------------+
-                        |   PostgreSQL Database   |
-                        +-------------------------+
-```
-
----
-
-## Request Flow Example
-
-### Booking Request Flow
-
-```text
-Client
-  |
-  v
-JWT Authenticated Request
-  |
-  v
-Booking Controller
-  |
-  v
-Booking Service
-  |
-  +--> Validate User
-  |
-  +--> Validate Travel Package
-  |
-  +--> Create Booking
-  |
-  +--> Trigger Payment Workflow
-  |
-  v
-Booking Repository
-  |
-  v
-PostgreSQL Database
-  |
-  v
-API Response
-```
-
-### Authentication Flow
-
-```text
-User Login -> Credentials Validation -> JWT Generation -> Secured API Access -> RBAC Enforcement
-```
-
----
-
-## Tech Stack
+## Technology Stack
 
 | Category | Technologies |
 | --- | --- |
 | Language | Java 21 |
 | Framework | Spring Boot 3.1.4 |
-| Security | Spring Security, JWT Authentication, RBAC Authorization |
+| Web | Spring Web |
+| Security | Spring Security, JWT, BCrypt, RBAC |
 | Persistence | Spring Data JPA, Hibernate |
 | Database | PostgreSQL |
-| Caching | Spring Cache, Redis |
-| Build Tool | Maven |
-| API Documentation | Swagger / OpenAPI |
-| Testing | JUnit 5, Mockito, MockMvc |
-| CI/CD | GitHub Actions CI |
-
----
-
-## Features
-
-### User Features
-
-- User registration and login
-- JWT-based authentication
-- Access to protected backend APIs
-- Browse and view travel packages
-- Create and manage bookings
-- Payment workflow support
-
-### Admin Features
-
-- Role-based access control with `ADMIN` and `USER`
-- Travel package management
-- Booking management
-- Payment monitoring and workflow control
-- Administrative access to secured management APIs
-- API documentation access for integration and testing
-
----
-
-## API Documentation
-
-Swagger UI is available at:
-
-`http://localhost:8080/swagger-ui/index.html`
-
-OpenAPI documentation helps developers explore and test the available endpoints interactively.
-
----
+| Cache | Redis, Spring Cache |
+| Build | Maven |
+| API Docs | springdoc OpenAPI, Swagger UI |
+| Testing | JUnit 5, Mockito, MockMvc, Spring Security Test |
+| Containers | Docker, Docker Compose |
+| CI | GitHub Actions |
 
 ## Project Structure
 
 ```text
 TripOps-Booking-Inventory-Management-Service/
-|-- .github/
-|   |-- workflows/
-|   |   `-- backend-ci.yml
-|-- .mvn/
-|-- src/
-|   |-- main/
-|   |   |-- java/
-|   |   |   `-- com/
-|   |   |       `-- aj/
-|   |   |           `-- travel/
-|   |   |               |-- auth/
-|   |   |               |-- user/
-|   |   |               |-- packages/
-|   |   |               |-- booking/
-|   |   |               |-- payment/
-|   |   |               `-- common/
-|   |   `-- resources/
-|   |       |-- application.yml
-|   |       |-- application-dev.yml
-|   |       `-- application-prod.yml
-|   `-- test/
-|-- .dockerignore
-|-- .env
+|-- .github/workflows/backend-ci.yml
 |-- Dockerfile
 |-- docker-compose.yml
 |-- pom.xml
-|-- mvnw
-|-- mvnw.cmd
+|-- src
+|   |-- main
+|   |   |-- java/com/aj/travel
+|   |   |   |-- auth
+|   |   |   |-- booking
+|   |   |   |-- common
+|   |   |   |-- packages
+|   |   |   |-- payment
+|   |   |   `-- user
+|   |   `-- resources
+|   |       |-- application.yml
+|   |       |-- application-dev.yml
+|   |       `-- application-prod.yml
+|   `-- test
+|       |-- java/com/aj/travel
+|       |   |-- auth
+|       |   |-- booking
+|       |   |-- common
+|       |   |-- packages
+|       |   |-- payment
+|       |   |-- security
+|       |   `-- user
+|       `-- resources/application-test.yml
 `-- README.md
 ```
 
----
+### Module shape
 
-## Getting Started
+Each business module follows the same internal layout:
 
-### Prerequisites
+- `controller` for HTTP boundary handling
+- `service` for orchestration and business rules
+- `repository` for persistence access
+- `domain` for entities and enums
+- `dto` and `mapper` for API contracts and translation
 
-- Java 21
-- PostgreSQL
-- Redis
-- Git
-- Docker Desktop or Docker Engine
+That consistency keeps the monolith navigable and lowers the cost of future extraction by making ownership boundaries obvious in the codebase.
 
-### Clone Repository
+## Security Implementation
 
-```bash
-git clone <repository-url>
-cd TripOps-Booking-Inventory-Management-Service
-```
+Security is implemented as a stateless request pipeline using Spring Security and JWT.
 
-### Build the Project
+- `JwtAuthenticationFilter` resolves bearer tokens and hydrates the security context per request
+- sessions are disabled with `SessionCreationPolicy.STATELESS`
+- passwords are stored using `BCryptPasswordEncoder`
+- authorization is enforced through request matcher rules and method-level annotations
+- unauthorized and forbidden responses are normalized into JSON API errors
 
-```bash
-./mvnw clean verify
-```
+### Access model
 
-On Windows PowerShell:
-
-```powershell
-.\mvnw.cmd clean verify
-```
-
-### Run the Application
-
-```bash
-./mvnw spring-boot:run
-```
-
-On Windows PowerShell:
-
-```powershell
-.\mvnw.cmd spring-boot:run
-```
-
-The default `dev` profile expects local PostgreSQL and Redis instances unless you override the environment variables below.
-
-After startup, the backend will be available locally and the Swagger UI can be accessed from the documentation URL above.
-
----
-
-## Configuration
-
-The application uses Spring profiles with environment variables for runtime configuration. By default, it starts with `SPRING_PROFILES_ACTIVE=dev`. The defaults below are the values defined in `application-dev.yml`.
-
-| Variable | Default |
+| Area | Access |
 | --- | --- |
-| `SPRING_PROFILES_ACTIVE` | `dev` |
-| `SERVER_PORT` | `8080` |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/travel_db` |
-| `DB_USERNAME` | `postgres` |
-| `DB_PASSWORD` | `123456` |
-| `DB_POOL_SIZE` | `10` |
-| `DB_MIN_IDLE` | `2` |
-| `DB_IDLE_TIMEOUT` | `300000` |
-| `DB_MAX_LIFETIME` | `1800000` |
-| `DB_CONNECTION_TIMEOUT` | `30000` |
-| `JPA_DDL_AUTO` | `update` |
-| `JPA_SHOW_SQL` | `true` |
-| `HIBERNATE_FORMAT_SQL` | `true` |
-| `REDIS_HOST` | `localhost` |
-| `REDIS_PORT` | `6379` |
-| `REDIS_TIMEOUT` | `2s` |
-| `JWT_SECRET` | `local-dev-jwt-secret-change-me` |
-| `RAZORPAY_KEY` | empty |
-| `RAZORPAY_SECRET` | empty |
-| `BOOTSTRAP_ADMIN_NAME` | `Default Admin` |
-| `BOOTSTRAP_ADMIN_EMAIL` | `admin@travel.local` |
-| `BOOTSTRAP_ADMIN_PASSWORD` | `admin123` |
+| `/`, `/api/system/health` | Public |
+| `/auth/register`, `/auth/login` | Public |
+| `/swagger-ui/**`, `/v3/api-docs/**` | Public |
+| `GET /packages`, `GET /packages/{id}` | `USER`, `ADMIN` |
+| `POST/PUT/DELETE /packages/**` | `ADMIN` |
+| `POST /bookings`, `GET /bookings/my` | `USER` |
+| `GET /bookings/all` | `ADMIN` |
+| `POST /payments`, `POST /payments/confirm/{bookingId}` | `USER` |
+| `POST /admin/register`, `GET /users` | `ADMIN` |
 
-The `prod` profile does not provide fallbacks for sensitive or infrastructure-specific settings, so those values must be supplied explicitly.
+## Redis Caching
 
----
+Redis is used as the backing store for Spring Cache on package read paths.
+
+- cache type: Redis
+- key prefix: `travel::`
+- value serialization: JSON via `GenericJackson2JsonRedisSerializer`
+- null values are not cached
+- `packages` cache TTL: 10 minutes
+- `packageById` cache TTL: 30 minutes
+
+Package write operations evict or refresh the relevant cache entries, so catalog reads stay fast without leaving stale inventory records behind after create, update, or delete flows.
+
+## Database and Transactional Consistency
+
+PostgreSQL is the system of record. Persistence is managed through Spring Data JPA with Hibernate, and database access is backed by HikariCP.
+
+Production-oriented choices already present in the codebase:
+
+- service-layer transaction boundaries via `@Transactional`
+- `readOnly = true` query methods for non-mutating paths
+- `spring.jpa.open-in-view=false` to keep persistence behavior explicit
+- cache invalidation coupled to package mutations
+- centralized exception translation for not found, duplicate, validation, auth, and authorization failures
+
+Current consistency model is intentionally simple: the application relies on single-database transactions for module interactions inside one deployable process. That is appropriate for the current architecture and avoids introducing distributed coordination patterns before they are needed.
+
+## API Surface
+
+Representative endpoint groups:
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /packages`
+- `GET /packages/{id}`
+- `POST /packages`
+- `POST /bookings`
+- `GET /bookings/my`
+- `GET /bookings/all`
+- `POST /payments`
+- `POST /payments/confirm/{bookingId}`
+- `GET /users`
+- `GET /api/system/health`
+
+Responses are wrapped in a consistent API envelope for success cases, while failures are returned as structured error payloads with status, error type, message, timestamp, and request path.
+
+## API Documentation
+
+Swagger UI:
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+OpenAPI docs:
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+The OpenAPI configuration includes bearer authentication metadata so secured endpoints can be exercised directly from Swagger.
 
 ## Docker
 
-Build and run the backend with PostgreSQL and Redis:
+The repository includes a multi-stage Docker build and a `docker-compose.yml` stack for the backend, PostgreSQL, and Redis.
+
+### 1. Prepare environment
+
+Update `.env` before starting the stack. `JWT_SECRET` must be at least 32 characters or the application will fail startup validation.
+
+Example:
+
+```env
+POSTGRES_DB=travel_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+JWT_SECRET=change-this-development-secret-key-123456
+```
+
+### 2. Start the stack
 
 ```bash
 docker compose up --build
 ```
 
-Access the API:
+The compose stack:
 
-`http://localhost:8080`
+- starts PostgreSQL 16 and Redis 7
+- waits for both dependencies to become healthy
+- builds the backend image from the repository Dockerfile
+- injects runtime configuration through environment variables
 
-Swagger UI:
+### 3. Access the service
 
-`http://localhost:8080/swagger-ui/index.html`
+```text
+API:       http://localhost:8080
+Swagger:   http://localhost:8080/swagger-ui/index.html
+Health:    http://localhost:8080/api/system/health
+```
 
-Stop containers:
+### 4. Stop the stack
 
 ```bash
 docker compose down
 ```
 
-The compose stack injects database and application settings through environment variables so the same image can be promoted across environments.
+## Local Development
 
----
+### Prerequisites
 
-## Branch Strategy
+- Java 21
+- Maven wrapper support
+- PostgreSQL
+- Redis
 
-The project follows a clean branch strategy for stability and ongoing development.
+### Run dependencies locally
 
-| Branch | Purpose |
-| --- | --- |
-| `main` | Production-ready code |
-| `dev` | Integration branch for active development |
-| `feature/*` | Feature-specific branches for new work |
-| `architecture-rebuild` | Frozen branch representing the architecture migration from MVC to REST |
+You can either:
 
----
+- run PostgreSQL and Redis directly on your machine, or
+- start only the infrastructure services with Docker and run the Spring Boot app from the host
 
-## Project Evolution
+Infrastructure only:
 
-This project has gone through a significant architectural transition:
-
-```text
-Spring MVC + Thymeleaf
-          |
-          v
-Layered Backend Refactoring
-          |
-          v
-REST API Rebuild
-          |
-          v
-JWT Authentication + RBAC
-          |
-          v
-Modular Monolith Spring Boot Backend
+```bash
+docker compose up postgres redis
 ```
 
-### Evolution Summary
+### Build and verify
 
-- Started as a server-rendered MVC application using Thymeleaf
-- Reworked into a REST-oriented backend for API-driven clients
-- Introduced JWT-based security for stateless authentication
-- Added role-based authorization for administrative and user access paths
-- Reorganized the codebase into domain-focused modules
+Linux/macOS:
 
----
+```bash
+./mvnw clean verify
+```
 
-## CI Pipeline
+Windows PowerShell:
 
-GitHub Actions is used to automate backend validation on every relevant change.
+```powershell
+.\mvnw.cmd clean verify
+```
 
-### CI Responsibilities
+### Start the application
 
-- Build verification with the Maven wrapper
-- Automated test execution
-- Early feedback for integration issues
-- Consistent validation across branches
+Linux/macOS:
 
-The current workflow runs on pushes to `dev` and `architecture-rebuild`, and on pull requests targeting `dev`.
+```bash
+./mvnw spring-boot:run
+```
 
----
+Windows PowerShell:
 
-## Future Improvements
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
-- Redis caching for high-read endpoints
-- Database indexing and query optimization
-- Performance and stress testing
-- Load balancing for horizontal scalability
-- Environment-specific deployment profiles
+By default, the application runs with the `dev` profile and expects PostgreSQL on `localhost:5432` and Redis on `localhost:6379` unless you override the environment variables below.
 
----
+## Environment Configuration
 
-## Author
+The application uses Spring profiles plus environment-driven runtime configuration.
 
-**Abinash Nayak**  
-Java Backend Developer  
-GitHub: [Aj-world](https://github.com/Aj-world)
+### Core application settings
 
----
+| Variable | Purpose | Dev default / example |
+| --- | --- | --- |
+| `SPRING_PROFILES_ACTIVE` | Active Spring profile | `dev` |
+| `SERVER_PORT` | HTTP port | `8080` |
+| `DB_URL` | JDBC connection URL | `jdbc:postgresql://localhost:5432/travel_db` |
+| `DB_USERNAME` | Database username | `postgres` |
+| `DB_PASSWORD` | Database password | `123456` |
+| `REDIS_HOST` | Redis host | `localhost` |
+| `REDIS_PORT` | Redis port | `6379` |
+| `REDIS_TIMEOUT` | Redis timeout | `2s` |
+| `JWT_SECRET` | JWT signing secret, minimum 32 chars | `change-this-development-secret-key-123456` |
+| `JPA_DDL_AUTO` | Hibernate schema mode | `update` in dev |
+| `JPA_SHOW_SQL` | SQL logging toggle | `true` in dev |
+| `HIBERNATE_FORMAT_SQL` | SQL formatting toggle | `true` in dev |
+
+### Connection pool settings
+
+| Variable | Purpose | Dev default |
+| --- | --- | --- |
+| `DB_POOL_SIZE` | Maximum pool size | `10` |
+| `DB_MIN_IDLE` | Minimum idle connections | `2` |
+| `DB_IDLE_TIMEOUT` | Idle timeout in ms | `300000` |
+| `DB_MAX_LIFETIME` | Max connection lifetime in ms | `1800000` |
+| `DB_CONNECTION_TIMEOUT` | Connection acquisition timeout in ms | `30000` |
+
+### Optional integration settings
+
+| Variable | Purpose |
+| --- | --- |
+| `RAZORPAY_KEY` | Payment provider configuration placeholder |
+| `RAZORPAY_SECRET` | Payment provider configuration placeholder |
+| `BOOTSTRAP_ADMIN_NAME` | Reserved runtime configuration for admin bootstrap workflows |
+| `BOOTSTRAP_ADMIN_EMAIL` | Reserved runtime configuration for admin bootstrap workflows |
+| `BOOTSTRAP_ADMIN_PASSWORD` | Reserved runtime configuration for admin bootstrap workflows |
+
+For the `prod` profile, infrastructure and secret values must be supplied explicitly.
+
+## Testing and CI
+
+The repository includes unit, controller, and integration coverage for core backend behavior, including:
+
+- authentication and login flow
+- RBAC enforcement
+- package, booking, and payment controller paths
+- service-level business logic
+- health endpoint exposure
+
+Test profile behavior:
+
+- in-memory H2 configured in PostgreSQL compatibility mode
+- Redis auto-configuration disabled
+- cache layer disabled for deterministic tests
+
+CI is defined in `.github/workflows/backend-ci.yml` and runs Maven build plus test verification on pushes to `dev` and `architecture-rebuild`, and on pull requests targeting `dev`.
+
+## Scalability Roadmap
+
+The current architecture is intentionally conservative. The next maturity steps are clear, but not falsely claimed as already complete:
+
+- introduce schema migration tooling such as Flyway or Liquibase
+- add observability primitives such as metrics, tracing, and structured request correlation
+- formalize package inventory concurrency rules for high-contention update paths
+- harden admin bootstrap and secrets handling for deployment environments
+- introduce async workflow boundaries where payment or notification side effects justify them
+- extract domain services only when operational scale or team boundaries make independent deployment worthwhile
 
 ## License
 
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).
