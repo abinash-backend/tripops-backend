@@ -1,4 +1,4 @@
-# Tours and Travel Management System
+# TripOps-Booking-Inventory-Management-Service
 
 ![Java](https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3-brightgreen?style=for-the-badge&logo=springboot)
@@ -17,7 +17,7 @@
 
 ## About
 
-**Tours and Travel Management System** is a modern Spring Boot backend built for travel agencies and booking platforms. It provides APIs for travel package management, booking workflows, secure authentication, authorization, and payment handling.
+**TripOps-Booking-Inventory-Management-Service** is a modern Spring Boot backend built for travel agencies and booking platforms. It provides APIs for travel package management, booking workflows, secure authentication, authorization, and payment handling.
 
 The project originally began as a traditional **Spring MVC + Thymeleaf** application and has since been rebuilt into a **REST-first backend** using a **modular monolith architecture**. The current design emphasizes maintainability, clear module boundaries, API-driven development, and production-oriented backend practices.
 
@@ -186,7 +186,7 @@ OpenAPI documentation helps developers explore and test the available endpoints 
 ## Project Structure
 
 ```text
-TOURS-AND-TRAVEL-MANAGEMENT-SYSTEM/
+TripOps-Booking-Inventory-Management-Service/
 |-- .github/
 |   |-- workflows/
 |   |   `-- backend-ci.yml
@@ -234,7 +234,7 @@ TOURS-AND-TRAVEL-MANAGEMENT-SYSTEM/
 
 ```bash
 git clone <repository-url>
-cd TOURS-AND-TRAVEL-MANAGEMENT-SYSTEM
+cd TripOps-Booking-Inventory-Management-Service
 ```
 
 ### Build the Project
