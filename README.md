@@ -65,7 +65,10 @@ Spring Data JPA Repositories
 PostgreSQL
 ```
 
-## Domain Modules
+- **Cache type:** Redis via `CacheManager`
+- **Key prefix:** `travel::` for operational visibility
+- **Serialization:** JSON via `GenericJackson2JsonRedisSerializer`
+- **Null handling:** Null values not cached (prevents pollution)
 
 | Module | Responsibility |
 | --- | --- |
