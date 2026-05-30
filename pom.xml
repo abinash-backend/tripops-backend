@@ -13,14 +13,14 @@
 	</parent>
 
 	<groupId>com.example</groupId>
-	<artifactId>TOURS-AND-TRAVEL-MANAGEMENT-SYSTEM</artifactId>
+	<artifactId>TripOps-Booking-Inventory-Management-Service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<!-- Changed from WAR to JAR -->
 	<packaging>jar</packaging>
 
-	<name>TOURS-AND-TRAVEL-MANAGEMENT-SYSTEM</name>
-	<description>Spring Boot Tours and Travel Management System</description>
+	<name>TripOps-Booking-Inventory-Management-Service</name>
+	<description>Spring Boot service for TripOps booking and inventory management</description>
 
 	<properties>
 		<java.version>21</java.version>

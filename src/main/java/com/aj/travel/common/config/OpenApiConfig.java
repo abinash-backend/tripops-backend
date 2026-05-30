@@ -14,8 +14,8 @@ public class OpenApiConfig {
     public OpenAPI travelManagementOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Tours & Travel Management API")
-                        .description("Backend API for travel booking system")
+                        .title("TripOps Booking Inventory Management Service API")
+                        .description("Backend API for TripOps booking and inventory workflows")
                         .version("1.0.0"))
                 .components(new Components()
                         .addSecuritySchemes("BearerAuth", new SecurityScheme()
