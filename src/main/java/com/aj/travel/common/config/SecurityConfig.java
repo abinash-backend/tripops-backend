@@ -1,5 +1,7 @@
-package com.aj.travel.auth.security;
+package com.aj.travel.common.config;
 
+import com.aj.travel.auth.security.JwtAuthenticationFilter;
+import com.aj.travel.auth.security.UserAuthenticationService;
 import com.aj.travel.common.exception.ApiError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/info",
+                                "/actuator/prometheus"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/packages", "/packages/*").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/admin/register").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/packages").hasRole("ADMIN")
