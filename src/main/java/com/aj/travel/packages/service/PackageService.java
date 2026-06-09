@@ -1,6 +1,8 @@
 package com.aj.travel.packages.service;
 
+import com.aj.travel.booking.repository.BookingRepository;
 import com.aj.travel.common.exception.ResourceNotFoundException;
+import com.aj.travel.common.exception.ResourceInUseException;
 import com.aj.travel.packages.domain.PackageStatus;
 import com.aj.travel.packages.domain.TravelPackage;
 import com.aj.travel.packages.dto.CreateTravelPackageRequest;
@@ -23,6 +25,7 @@ import java.util.List;
 public class PackageService {
 
     private final TravelPackageRepository packageRepository;
+    private final BookingRepository bookingRepository;
     private final PackageMapper packageMapper;
 
     @CacheEvict(cacheNames = "packages", key = "'active'")
@@ -52,6 +55,10 @@ public class PackageService {
     public void deletePackage(Long id) {
         TravelPackage travelPackage = packageRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Package not found"));
+
+        if (bookingRepository.existsByPackageId(id)) {
+            throw new ResourceInUseException("Package cannot be deleted because bookings exist");
+        }
 
         packageRepository.delete(travelPackage);
     }

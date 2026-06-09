@@ -66,6 +66,7 @@ class PackageControllerTest {
                         "Goa",
                         BigDecimal.valueOf(15000),
                         10,
+                        10,
                         LocalDate.of(2026, 5, 10),
                         LocalDate.of(2026, 5, 15),
                         "ACTIVE",

@@ -1,5 +1,7 @@
 package com.aj.travel.packages.service;
 
+import com.aj.travel.booking.repository.BookingRepository;
+import com.aj.travel.common.exception.ResourceInUseException;
 import com.aj.travel.packages.domain.PackageStatus;
 import com.aj.travel.packages.domain.TravelPackage;
 import com.aj.travel.packages.dto.CreateTravelPackageRequest;
@@ -20,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +31,9 @@ class PackageServiceTest {
 
     @Mock
     private TravelPackageRepository packageRepository;
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @Mock
     private PackageMapper packageMapper;
@@ -55,6 +61,7 @@ class PackageServiceTest {
                 "Beach holiday",
                 "Goa",
                 BigDecimal.valueOf(15000),
+                10,
                 10,
                 LocalDate.of(2026, 5, 10),
                 LocalDate.of(2026, 5, 15),
@@ -120,13 +127,33 @@ class PackageServiceTest {
         travelPackage.setId(1L);
 
         when(packageRepository.findById(1L)).thenReturn(Optional.of(travelPackage));
+        when(bookingRepository.existsByPackageId(1L)).thenReturn(false);
 
         // Act
         packageService.deletePackage(1L);
 
         // Assert
         verify(packageRepository).findById(1L);
+        verify(bookingRepository).existsByPackageId(1L);
         verify(packageRepository).delete(travelPackage);
+    }
+
+    @Test
+    void deletePackage_withExistingBookings_throwsConflict() {
+        TravelPackage travelPackage = new TravelPackage();
+        travelPackage.setId(1L);
+
+        when(packageRepository.findById(1L)).thenReturn(Optional.of(travelPackage));
+        when(bookingRepository.existsByPackageId(1L)).thenReturn(true);
+
+        ResourceInUseException exception = assertThrows(
+                ResourceInUseException.class,
+                () -> packageService.deletePackage(1L)
+        );
+
+        assertEquals("Package cannot be deleted because bookings exist", exception.getMessage());
+        verify(packageRepository).findById(1L);
+        verify(bookingRepository).existsByPackageId(1L);
     }
 
     @Test

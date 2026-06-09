@@ -14,7 +14,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:update}
+      ddl-auto: ${JPA_DDL_AUTO:validate}
     open-in-view: false
     show-sql: ${JPA_SHOW_SQL:true}
     properties:
@@ -32,7 +32,7 @@ server:
   port: ${SERVER_PORT:8080}
 
 jwt:
-  secret: ${JWT_SECRET:local-dev-jwt-secret-change-me}
+  secret: ${JWT_SECRET:local-development-jwt-secret-change-me-123456}
 
 razorpay:
   key: ${RAZORPAY_KEY:}
