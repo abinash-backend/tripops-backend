@@ -15,10 +15,13 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long bookingId;
 
+    @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(nullable = false)
     private String paymentMethod;
 
     private String razorpayOrderId;
@@ -26,12 +29,8 @@ public class Payment {
     private String razorpayPaymentId;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private PaymentStatus status;
 
     private LocalDateTime paidAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.paidAt = LocalDateTime.now();
-    }
 }

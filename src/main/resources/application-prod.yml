@@ -14,7 +14,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO}
+      ddl-auto: ${JPA_DDL_AUTO:validate}
     open-in-view: false
     show-sql: false
     properties:

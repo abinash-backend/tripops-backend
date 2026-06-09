@@ -40,6 +40,30 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ResourceInUseException.class)
+    public ResponseEntity<ApiError> handleResourceInUseException(
+            ResourceInUseException ex,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(InsufficientCapacityException.class)
+    public ResponseEntity<ApiError> handleInsufficientCapacityException(
+            InsufficientCapacityException ex,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException ex,

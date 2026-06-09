@@ -15,17 +15,30 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long userId;
 
+    @Column(nullable = false)
     private Long packageId;
 
+    @Column(nullable = false)
     private Integer guestCount;
 
+    @Column(nullable = false)
     private BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private BookingStatus status;
 
+    @Column(nullable = false, updatable = false)
     private LocalDateTime bookingDate;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.bookingDate == null) {
+            this.bookingDate = LocalDateTime.now();
+        }
+    }
 
 }

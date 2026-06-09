@@ -11,6 +11,7 @@ public class PackageMapper {
     public TravelPackage toEntity(CreateTravelPackageRequest request) {
         TravelPackage travelPackage = new TravelPackage();
         updateEntity(travelPackage, request);
+        travelPackage.setAvailableCapacity(request.getCapacity());
         return travelPackage;
     }
 
@@ -33,6 +34,7 @@ public class PackageMapper {
                 travelPackage.getLocation(),
                 travelPackage.getPrice(),
                 travelPackage.getCapacity(),
+                travelPackage.getAvailableCapacity(),
                 travelPackage.getStartDate(),
                 travelPackage.getEndDate(),
                 travelPackage.getStatus() != null ? travelPackage.getStatus().name() : null,

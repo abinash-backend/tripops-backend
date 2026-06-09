@@ -4,6 +4,7 @@ import com.aj.travel.auth.security.AuthenticatedUserPrincipal;
 import com.aj.travel.booking.domain.Booking;
 import com.aj.travel.booking.domain.BookingStatus;
 import com.aj.travel.booking.repository.BookingRepository;
+import com.aj.travel.common.exception.DuplicateResourceException;
 import com.aj.travel.common.exception.ResourceNotFoundException;
 import com.aj.travel.payment.domain.Payment;
 import com.aj.travel.payment.domain.PaymentStatus;
@@ -17,6 +18,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,10 @@ public class PaymentService {
 
         validateBookingOwnership(booking, currentUserId);
 
+        if (paymentRepository.findByBookingId(booking.getId()).isPresent()) {
+            throw new DuplicateResourceException("Payment already exists for this booking");
+        }
+
         Payment payment = paymentMapper.toEntity(request, booking);
         payment.setStatus(PaymentStatus.CREATED);
 
@@ -50,6 +57,13 @@ public class PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
         validateBookingOwnership(booking, currentUserId);
+
+        Payment payment = paymentRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+
+        payment.setStatus(PaymentStatus.SUCCESS);
+        payment.setPaidAt(LocalDateTime.now());
+        paymentRepository.save(payment);
 
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);

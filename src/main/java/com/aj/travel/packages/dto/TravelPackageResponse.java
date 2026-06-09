@@ -19,6 +19,7 @@ public class TravelPackageResponse {
     private String location;
     private BigDecimal price;
     private Integer capacity;
+    private Integer availableCapacity;
     private LocalDate startDate;
     private LocalDate endDate;
     private String status;

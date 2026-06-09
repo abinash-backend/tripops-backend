@@ -7,6 +7,7 @@ import com.aj.travel.booking.dto.BookingResponse;
 import com.aj.travel.booking.dto.CreateBookingRequest;
 import com.aj.travel.booking.mapper.BookingMapper;
 import com.aj.travel.booking.repository.BookingRepository;
+import com.aj.travel.common.exception.InsufficientCapacityException;
 import com.aj.travel.common.exception.ResourceNotFoundException;
 import com.aj.travel.packages.domain.TravelPackage;
 import com.aj.travel.packages.repository.TravelPackageRepository;
@@ -55,6 +56,7 @@ class BookingServiceTest {
         TravelPackage travelPackage = new TravelPackage();
         travelPackage.setId(1L);
         travelPackage.setPrice(BigDecimal.valueOf(1000));
+        travelPackage.setAvailableCapacity(5);
 
         CreateBookingRequest request = new CreateBookingRequest(1L, 2);
 
@@ -69,12 +71,12 @@ class BookingServiceTest {
 
         BookingResponse expectedResponse = new BookingResponse(
                 10L, 7L, 1L, 2,
-                BigDecimal.valueOf(1000),
+                BigDecimal.valueOf(2000),
                 "PENDING_PAYMENT",
                 savedBooking.getBookingDate()
         );
 
-        when(packageRepository.findById(1L)).thenReturn(Optional.of(travelPackage));
+        when(packageRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(travelPackage));
         when(bookingMapper.toEntity(request, 7L, travelPackage)).thenReturn(booking);
         when(bookingRepository.save(booking)).thenReturn(savedBooking);
         when(bookingMapper.toResponse(savedBooking)).thenReturn(expectedResponse);
@@ -84,8 +86,10 @@ class BookingServiceTest {
         assertNotNull(response);
         assertEquals(10L, response.getId());
         assertEquals("PENDING_PAYMENT", response.getStatus());
+        assertEquals(3, travelPackage.getAvailableCapacity());
 
-        verify(packageRepository).findById(1L);
+        verify(packageRepository).findByIdForUpdate(1L);
+        verify(packageRepository).save(travelPackage);
         verify(bookingMapper).toEntity(request, 7L, travelPackage);
         verify(bookingRepository).save(booking);
     }
@@ -95,7 +99,7 @@ class BookingServiceTest {
         setAuthenticatedUser(7L);
 
         CreateBookingRequest request = new CreateBookingRequest(99L, 2);
-        when(packageRepository.findById(99L)).thenReturn(Optional.empty());
+        when(packageRepository.findByIdForUpdate(99L)).thenReturn(Optional.empty());
 
         ResourceNotFoundException ex = assertThrows(
                 ResourceNotFoundException.class,
@@ -103,6 +107,29 @@ class BookingServiceTest {
         );
 
         assertEquals("Package not found", ex.getMessage());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createBooking_insufficientCapacity() {
+        setAuthenticatedUser(7L);
+
+        TravelPackage travelPackage = new TravelPackage();
+        travelPackage.setId(1L);
+        travelPackage.setAvailableCapacity(1);
+
+        CreateBookingRequest request = new CreateBookingRequest(1L, 2);
+
+        when(packageRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(travelPackage));
+
+        InsufficientCapacityException exception = assertThrows(
+                InsufficientCapacityException.class,
+                () -> bookingService.createBooking(request)
+        );
+
+        assertEquals("Not enough capacity available for this package", exception.getMessage());
+        assertEquals(1, travelPackage.getAvailableCapacity());
+        verify(packageRepository, never()).save(any());
         verify(bookingRepository, never()).save(any());
     }
 

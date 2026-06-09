@@ -6,6 +6,8 @@ import com.aj.travel.booking.dto.CreateBookingRequest;
 import com.aj.travel.packages.domain.TravelPackage;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 @Component
 public class BookingMapper {
 
@@ -14,7 +16,7 @@ public class BookingMapper {
         booking.setUserId(userId);
         booking.setPackageId(travelPackage.getId());
         booking.setGuestCount(request.getGuestCount());
-        booking.setTotalPrice(travelPackage.getPrice());
+        booking.setTotalPrice(travelPackage.getPrice().multiply(BigDecimal.valueOf(request.getGuestCount())));
         return booking;
     }
 

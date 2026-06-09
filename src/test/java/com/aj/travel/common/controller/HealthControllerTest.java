@@ -47,7 +47,7 @@ class HealthControllerTest {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/json"))
-                .andExpect(jsonPath("$.message").value("Tours & Travel Backend API is running"))
+                .andExpect(jsonPath("$.message").value("TripOps Backend API is running"))
                 .andExpect(jsonPath("$.health").value("/api/system/health"))
                 .andExpect(jsonPath("$.swagger").value("/swagger-ui/index.html"));
     }
