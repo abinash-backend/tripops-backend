@@ -4,6 +4,7 @@ import com.aj.travel.auth.security.AuthenticatedUserPrincipal;
 import com.aj.travel.booking.domain.Booking;
 import com.aj.travel.booking.domain.BookingStatus;
 import com.aj.travel.booking.repository.BookingRepository;
+import com.aj.travel.common.exception.DuplicateResourceException;
 import com.aj.travel.common.exception.ResourceNotFoundException;
 import com.aj.travel.payment.domain.Payment;
 import com.aj.travel.payment.domain.PaymentStatus;
@@ -22,7 +23,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,7 +66,6 @@ class PaymentServiceTest {
         Payment savedPayment = new Payment();
         savedPayment.setId(20L);
         savedPayment.setStatus(PaymentStatus.CREATED);
-        savedPayment.setPaidAt(LocalDateTime.now());
 
         PaymentResponse expected = new PaymentResponse(
                 20L,
@@ -76,10 +75,11 @@ class PaymentServiceTest {
                 null,
                 null,
                 "CREATED",
-                savedPayment.getPaidAt()
+                null
         );
 
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(paymentRepository.findByBookingId(1L)).thenReturn(Optional.empty());
         when(paymentMapper.toEntity(request, booking)).thenReturn(payment);
         when(paymentRepository.save(payment)).thenReturn(savedPayment);
         when(paymentMapper.toResponse(savedPayment)).thenReturn(expected);
@@ -88,8 +88,33 @@ class PaymentServiceTest {
 
         assertNotNull(response);
         assertEquals("CREATED", response.getStatus());
+        assertNull(response.getPaidAt());
 
         verify(paymentRepository).save(payment);
+    }
+
+    @Test
+    void createPayment_existingPaymentForBookingThrowsConflict() {
+        setAuthenticatedUser(5L);
+
+        Booking booking = new Booking();
+        booking.setId(1L);
+        booking.setUserId(5L);
+
+        Payment existingPayment = new Payment();
+        existingPayment.setId(20L);
+        existingPayment.setBookingId(1L);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(paymentRepository.findByBookingId(1L)).thenReturn(Optional.of(existingPayment));
+
+        DuplicateResourceException exception = assertThrows(
+                DuplicateResourceException.class,
+                () -> paymentService.createPayment(new CreatePaymentRequest(1L, "CARD"))
+        );
+
+        assertEquals("Payment already exists for this booking", exception.getMessage());
+        verify(paymentRepository, never()).save(any());
     }
 
     @Test
@@ -113,6 +138,7 @@ class PaymentServiceTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> paymentService.createPayment(new CreatePaymentRequest(1L, "UPI")));
+        verify(paymentRepository, never()).findByBookingId(any());
     }
 
     @Test
@@ -124,12 +150,42 @@ class PaymentServiceTest {
         booking.setUserId(5L);
         booking.setStatus(BookingStatus.PENDING_PAYMENT);
 
+        Payment payment = new Payment();
+        payment.setId(20L);
+        payment.setBookingId(1L);
+        payment.setStatus(PaymentStatus.CREATED);
+
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(paymentRepository.findByBookingId(1L)).thenReturn(Optional.of(payment));
 
         paymentService.confirmPayment(1L);
 
         assertEquals(BookingStatus.CONFIRMED, booking.getStatus());
+        assertEquals(PaymentStatus.SUCCESS, payment.getStatus());
+        assertNotNull(payment.getPaidAt());
+        verify(paymentRepository).save(payment);
         verify(bookingRepository).save(booking);
+    }
+
+    @Test
+    void confirmPayment_paymentNotFound() {
+        setAuthenticatedUser(5L);
+
+        Booking booking = new Booking();
+        booking.setId(1L);
+        booking.setUserId(5L);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(paymentRepository.findByBookingId(1L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> paymentService.confirmPayment(1L)
+        );
+
+        assertEquals("Payment not found", exception.getMessage());
+        verify(paymentRepository, never()).save(any());
+        verify(bookingRepository, never()).save(any());
     }
 
     @Test
@@ -143,6 +199,7 @@ class PaymentServiceTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> paymentService.confirmPayment(1L));
+        verify(paymentRepository, never()).findByBookingId(any());
     }
 
     private void setAuthenticatedUser(Long userId) {

@@ -74,7 +74,7 @@ class RbacIntegrationTest {
 
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Tours & Travel Backend API is running"));
+                .andExpect(jsonPath("$.message").value("TripOps Backend API is running"));
 
         mockMvc.perform(get("/api/system/health"))
                 .andExpect(status().isOk())
@@ -223,7 +223,8 @@ class RbacIntegrationTest {
 
         mockMvc.perform(delete("/packages/{id}", packageId)
                         .header(HttpHeaders.AUTHORIZATION, bearerToken(adminToken)))
-                .andExpect(status().isOk());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Package cannot be deleted because bookings exist"));
     }
 
     @Test
