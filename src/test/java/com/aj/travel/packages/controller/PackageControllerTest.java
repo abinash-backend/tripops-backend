@@ -1,8 +1,8 @@
 package com.aj.travel.packages.controller;
 
 import com.aj.travel.auth.security.JwtAuthenticationFilter;
-import com.aj.travel.auth.security.SecurityConfig;
 import com.aj.travel.auth.security.UserAuthenticationService;
+import com.aj.travel.common.config.SecurityConfig;
 import com.aj.travel.packages.dto.TravelPackageResponse;
 import com.aj.travel.packages.service.PackageService;
 import org.junit.jupiter.api.BeforeEach;

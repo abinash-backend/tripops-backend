@@ -14,6 +14,22 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+  endpoint:
+    health:
+      show-details: always
+
+info:
+  app:
+    name: TripOps
+    version: 1.0.0
+    description: Booking and Inventory Management Service
+
 logging:
   pattern:
     level: "requestId=%X{requestId:-N/A} %5p"
