@@ -1,8 +1,8 @@
 package com.aj.travel.common.controller;
 
 import com.aj.travel.auth.security.JwtAuthenticationFilter;
-import com.aj.travel.auth.security.SecurityConfig;
 import com.aj.travel.auth.security.UserAuthenticationService;
+import com.aj.travel.common.config.SecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

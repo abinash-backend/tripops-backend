@@ -1,8 +1,8 @@
 package com.aj.travel.payment.controller;
 
 import com.aj.travel.auth.security.JwtAuthenticationFilter;
-import com.aj.travel.auth.security.SecurityConfig;
 import com.aj.travel.auth.security.UserAuthenticationService;
+import com.aj.travel.common.config.SecurityConfig;
 import com.aj.travel.payment.dto.PaymentResponse;
 import com.aj.travel.payment.service.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
