@@ -12,7 +12,7 @@ public class HealthController {
     public Map<String, String> apiInfo() {
         return Map.of(
                 "health", "/api/system/health",
-                "message", "TripOps Backend API is running",
+                "message", "TripOps | Booking & Inventory Management System API is running",
                 "swagger", "/swagger-ui/index.html"
         );
     }
