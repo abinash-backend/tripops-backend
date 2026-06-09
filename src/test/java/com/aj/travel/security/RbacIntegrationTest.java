@@ -74,7 +74,8 @@ class RbacIntegrationTest {
 
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("TripOps Backend API is running"));
+                .andExpect(jsonPath("$.message")
+                        .value("TripOps | Booking & Inventory Management System API is running"));
 
         mockMvc.perform(get("/api/system/health"))
                 .andExpect(status().isOk())

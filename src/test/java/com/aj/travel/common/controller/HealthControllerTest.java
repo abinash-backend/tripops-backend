@@ -47,8 +47,11 @@ class HealthControllerTest {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/json"))
-                .andExpect(jsonPath("$.message").value("TripOps Backend API is running"))
-                .andExpect(jsonPath("$.health").value("/api/system/health"))
-                .andExpect(jsonPath("$.swagger").value("/swagger-ui/index.html"));
+                .andExpect(jsonPath("$.message")
+                        .value("TripOps | Booking & Inventory Management System API is running"))
+                .andExpect(jsonPath("$.health")
+                        .value("/api/system/health"))
+                .andExpect(jsonPath("$.swagger")
+                        .value("/swagger-ui/index.html"));
     }
 }
