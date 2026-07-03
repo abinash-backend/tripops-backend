@@ -24,7 +24,7 @@ public class AdminController {
     public ApiResponse<UserResponse> registerAdmin(
             @Valid @RequestBody CreateUserRequest request
     ) {
-
+        System.out.println("hi");
         UserResponse savedAdmin = userService.createAdmin(request);
 
         return ApiResponse.success(
